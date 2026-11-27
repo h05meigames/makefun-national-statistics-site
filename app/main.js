@@ -19,9 +19,11 @@ import {
   HDI,
   INFLATION,
   ISLAND_LABELS,
+  POOR_COUNT,
   POPULATION_SERIES,
   POVERTY,
   PROVINCES,
+  TPAK,
   TRADE_2024,
   UNEMPLOYMENT,
 } from './data.js';
@@ -58,11 +60,13 @@ function drawEconomy(tab) {
   if (tab === 'inflasi') draw('chart-inflation', (c) => barChart(c, INFLATION.map((p) => ({ label: String(p.year), value: p.value })), fmtPct));
   if (tab === 'kerja') draw('chart-unemp', (c) => lineChart(c, UNEMPLOYMENT.map((p) => ({ label: String(p.year), value: p.value })), fmtPct));
   if (tab === 'dagang') draw('chart-trade', (c) => barChart(c, TRADE_2024.map((p) => ({ label: p.label, value: p.value })), (v) => `US$${fmtNum(v)} M`));
+  if (tab === 'tenagakerja') draw('chart-tpak', (c) => lineChart(c, TPAK.map((p) => ({ label: String(p.year), value: p.value })), fmtPct));
 }
 
 function drawSocial() {
   draw('chart-poverty', (c) => lineChart(c, POVERTY.map((p) => ({ label: String(p.year), value: p.value })), fmtPct));
   draw('chart-hdi', (c) => lineChart(c, HDI.map((p) => ({ label: String(p.year), value: p.value })), fmtNum));
+  draw('chart-poorcount', (c) => barChart(c, POOR_COUNT.map((p) => ({ label: String(p.year), value: p.value })), fmtJt));
   const series = socialChart === 'gini' ? GINI : HDI;
   draw('chart-social', (c) => lineChart(c, series.map((p) => ({ label: String(p.year), value: p.value })), fmtNum));
 }
@@ -71,6 +75,60 @@ function drawDaerah() {
   const top10 = [...PROVINCES].sort((a, b) => b.pop - a.pop).slice(0, 10);
   draw('chart-top10', (c) => hbarChart(c, top10.map((p) => ({ label: p.name, value: p.pop })), fmtJt));
   renderProvinceTable();
+  renderCompare();
+}
+
+function provinceRank(name) {
+  return [...PROVINCES].sort((a, b) => b.pop - a.pop).findIndex((x) => x.name === name) + 1;
+}
+
+function renderCompare() {
+  const aSel = document.getElementById('compare-a');
+  const bSel = document.getElementById('compare-b');
+  const box = document.getElementById('compare-result');
+  const canvas = document.getElementById('chart-compare');
+  if (!aSel || !bSel || !box) return;
+  const a = PROVINCES.find((x) => x.name === aSel.value);
+  const b = PROVINCES.find((x) => x.name === bSel.value);
+  if (!a || !b) return;
+  const share = (p) => fmtNum(Math.round((p.pop / TOTAL_POP) * 1000) / 10);
+  const diff = Math.round(Math.abs(a.pop - b.pop) * 10) / 10;
+  const bigger = a.pop >= b.pop ? a : b;
+  const smaller = a.pop >= b.pop ? b : a;
+  box.innerHTML = `<table>
+    <thead><tr><th></th><th>${esc(a.name)}</th><th>${esc(b.name)}</th></tr></thead>
+    <tbody>
+      <tr><td>Penduduk 2024</td><td>${fmtNum(a.pop)} juta jiwa</td><td>${fmtNum(b.pop)} juta jiwa</td></tr>
+      <tr><td>Pangsa nasional</td><td>${share(a)}%</td><td>${share(b)}%</td></tr>
+      <tr><td>Peringkat provinsi</td><td>${provinceRank(a.name)} dari ${PROVINCES.length}</td><td>${provinceRank(b.name)} dari ${PROVINCES.length}</td></tr>
+      <tr><td>Pulau</td><td>${esc(ISLAND_LABELS[a.island])}</td><td>${esc(ISLAND_LABELS[b.island])}</td></tr>
+    </tbody>
+  </table>
+  <p>${esc(bigger.name)} lebih banyak ${fmtNum(diff)} juta jiwa daripada ${esc(smaller.name)}.</p>`;
+  if (canvas) {
+    canvas.hidden = false;
+    draw('chart-compare', (c) => hbarChart(c, [a, b].map((p) => ({ label: p.name, value: p.pop })), fmtJt));
+  }
+}
+
+function downloadCsv() {
+  const rows = filteredProvinces();
+  const head = 'Provinsi,Pulau,Penduduk 2024 (juta),Pangsa nasional (%)';
+  const lines = rows.map((p) => [
+    `"${p.name}"`,
+    `"${ISLAND_LABELS[p.island]}"`,
+    `"${fmtNum(p.pop)}"`,
+    `"${fmtNum(Math.round((p.pop / TOTAL_POP) * 1000) / 10)}"`,
+  ].join(','));
+  const blob = new Blob([[head, ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'datanusa-provinsi-2024.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -147,6 +205,13 @@ function wireDaerah() {
       }
     });
   }
+  const compareForm = document.getElementById('compare-form');
+  if (compareForm) {
+    compareForm.addEventListener('submit', (e) => { e.preventDefault(); renderCompare(); });
+    compareForm.addEventListener('change', renderCompare);
+  }
+  const csvBtn = document.getElementById('download-csv');
+  if (csvBtn) csvBtn.addEventListener('click', downloadCsv);
   const params = new URLSearchParams(location.hash.split('?')[1] || '');
   const wanted = params.get('prov');
   if (wanted) showProvinceDetail(wanted);

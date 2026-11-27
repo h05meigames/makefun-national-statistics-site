@@ -6,9 +6,12 @@ import {
   DENSITY_NOTES,
   FACTS,
   GDP_SECTORS,
+  LABOR_FACTS,
   META,
   OVERVIEW,
+  POOR_COUNT,
   PROVINCES,
+  TPAK,
   TRADE_2024,
 } from './data.js';
 
@@ -133,8 +136,9 @@ export function ekonomi() {
   <div class="tabs" role="tablist" aria-label="Topik ekonomi">
     <button type="button" role="tab" data-tab="pdb" class="active" aria-selected="true">PDB</button>
     <button type="button" role="tab" data-tab="inflasi" aria-selected="false">Inflasi</button>
-    <button type="button" role="tab" data-tab="kerja" aria-selected="false">Ketenagakerjaan</button>
+    <button type="button" role="tab" data-tab="kerja" aria-selected="false">Pengangguran</button>
     <button type="button" role="tab" data-tab="dagang" aria-selected="false">Perdagangan</button>
+    <button type="button" role="tab" data-tab="tenagakerja" aria-selected="false">Tenaga kerja</button>
   </div>
   <section class="card tabpanel" id="tab-pdb">
     <h2>Pertumbuhan PDB, 2019–2024</h2>
@@ -163,6 +167,22 @@ export function ekonomi() {
     US$31,0 miliar.</p>
     <canvas id="chart-trade" data-height="280" role="img" aria-label="Grafik batang ekspor impor dan surplus 2024"></canvas>
     ${source('BPS 2024, miliar USD')}
+  </section>
+  <section class="card tabpanel" id="tab-tenagakerja" hidden>
+    <h2>Tenaga kerja, 2019–2024</h2>
+    <p>Tingkat Partisipasi Angkatan Kerja (TPAK) naik ke 70,63% pada Agustus 2024 — dari setiap
+    100 penduduk usia kerja, sekitar 71 orang aktif di pasar kerja. Arahkan kursor ke titik
+    grafik untuk melihat nilai persisnya.</p>
+    <canvas id="chart-tpak" data-height="280" role="img" aria-label="Grafik garis TPAK 2019 sampai 2024"></canvas>
+    ${source('BPS, Survei Angkatan Kerja Nasional (Sakernas), Agustus 2019–2024')}
+    <h3>Angka kunci Agustus 2024</h3>
+    <dl class="kv">
+      <dt>Angkatan kerja</dt><dd>${escape(LABOR_FACTS.laborForce)} (BPS)</dd>
+      <dt>Bekerja</dt><dd>${escape(LABOR_FACTS.working)} (BPS)</dd>
+      <dt>Pengangguran</dt><dd>${escape(LABOR_FACTS.unemployed)} (BPS)</dd>
+      <dt>Pekerja informal</dt><dd>${escape(LABOR_FACTS.informal)} dari yang bekerja (BPS)</dd>
+      <dt>Pekerja formal</dt><dd>${escape(LABOR_FACTS.formal)} dari yang bekerja (BPS)</dd>
+    </dl>
   </section>`;
 }
 
@@ -177,7 +197,27 @@ export function daerah() {
     ${source('BPS, estimasi pertengahan 2024, juta jiwa')}
   </section>
   <section class="card">
-    <h2>Semua provinsi</h2>
+    <h2>Bandingkan dua provinsi</h2>
+    <p>Pilih dua provinsi untuk membandingkan jumlah penduduk, pangsa nasional, dan
+    peringkatnya.</p>
+    <form class="filters" id="compare-form">
+      <label>Provinsi pertama
+        <select id="compare-a">${PROVINCES.map((p) => `<option value="${escape(p.name)}">${escape(p.name)}</option>`).join('')}</select>
+      </label>
+      <label>Provinsi kedua
+        <select id="compare-b">${PROVINCES.map((p) => `<option value="${escape(p.name)}" ${p.name === 'Jawa Timur' ? 'selected' : ''}>${escape(p.name)}</option>`).join('')}</select>
+      </label>
+      <button type="submit" class="btn">Bandingkan</button>
+    </form>
+    <div id="compare-result" class="compare" aria-live="polite"></div>
+    <canvas id="chart-compare" data-height="150" role="img" aria-label="Grafik perbandingan penduduk dua provinsi" hidden></canvas>
+    ${source('BPS, estimasi pertengahan 2024, juta jiwa')}
+  </section>
+  <section class="card">
+    <div class="card-head">
+      <h2>Semua provinsi</h2>
+      <button type="button" class="btn" id="download-csv">Unduh CSV</button>
+    </div>
     <form class="filters" id="province-filters">
       <label>Cari provinsi
         <input type="search" id="province-search" placeholder="mis. Jawa Barat" autocomplete="off">
@@ -234,6 +274,13 @@ export function sosial() {
       <canvas id="chart-hdi" data-height="260" role="img" aria-label="Grafik garis IPM 2019 sampai 2024"></canvas>
       ${source('BPS 2019–2024')}
     </article>
+  </section>
+  <section class="card">
+    <h2>Jumlah penduduk miskin, 2019–2024</h2>
+    <p>Jumlah penduduk miskin turun ke 25,22 juta jiwa pada Maret 2024, setelah sempat naik ke
+    27,54 juta pada 2021. Arahkan kursor ke batang grafik untuk melihat nilai persisnya.</p>
+    <canvas id="chart-poorcount" data-height="260" role="img" aria-label="Grafik batang jumlah penduduk miskin 2019 sampai 2024"></canvas>
+    ${source('BPS, Maret 2019–2024, juta jiwa')}
   </section>
   <section class="card">
     <div class="card-head">

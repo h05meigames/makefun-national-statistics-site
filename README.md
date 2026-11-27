@@ -6,9 +6,10 @@
 
 Situs statistik nasional Indonesia yang berjalan dari file statis tanpa permintaan jaringan:
 beranda dengan angka utama, halaman penduduk & demografi, ekonomi (PDB, inflasi,
-pengangguran, perdagangan), daerah & provinsi (38 provinsi, bisa dicari, disaring, dan
-diurutkan), serta halaman sosial dan tentang data. Semua grafik digambar di kanvas dari data
-di `app/data.js`; setiap angka disertai sumber dan tahun (BPS dan Bank Indonesia).
+pengangguran, perdagangan, tenaga kerja), daerah & provinsi (38 provinsi, bisa dicari, disaring,
+diurutkan, dibandingkan dua-dua, dan diunduh sebagai CSV), serta halaman sosial dan tentang data.
+Semua grafik digambar di kanvas dari data di `app/data.js` dan menampilkan nilai persis saat
+kursor diarahkan ke batang atau titiknya; setiap angka disertai sumber dan tahun (BPS dan Bank Indonesia).
 
 Buka `app/index.html` lewat server statis apa pun, atau jalankan `node serve.ts` lalu buka
 http://localhost:8080.

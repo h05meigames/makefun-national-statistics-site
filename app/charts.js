@@ -8,6 +8,51 @@ const TEAL = '#0f766e';
 const AMBER = '#d97706';
 const RED = '#b91c1c';
 
+// Satu elemen tooltip untuk semua grafik kanvas: muncul saat kursor menyentuh batang
+// atau titik grafik, menampilkan label dan nilai persisnya.
+let tipEl = null;
+function getTipEl() {
+  if (!tipEl) {
+    tipEl = document.createElement('div');
+    tipEl.className = 'chart-tip';
+    tipEl.hidden = true;
+    document.body.appendChild(tipEl);
+  }
+  return tipEl;
+}
+
+function bindTooltip(canvas) {
+  if (canvas.__tipBound) return;
+  canvas.__tipBound = true;
+  canvas.addEventListener('mousemove', (e) => {
+    const tip = canvas.__tip;
+    const el = getTipEl();
+    if (!tip || !tip.items.length) { el.hidden = true; return; }
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    let hit = null;
+    if (tip.kind === 'bar') {
+      hit = tip.items.find((it) => x >= it.x0 && x <= it.x1 && y >= it.y0 && y <= it.y1);
+    } else {
+      let best = null;
+      let bestDist = 28;
+      for (const it of tip.items) {
+        const d = Math.hypot(it.x - x, it.y - y);
+        if (d < bestDist) { bestDist = d; best = it; }
+      }
+      hit = best;
+    }
+    if (!hit) { el.hidden = true; return; }
+    el.textContent = `${hit.label}: ${hit.text}`;
+    el.hidden = false;
+    const tipW = el.offsetWidth;
+    el.style.left = `${Math.min(Math.max(8, e.clientX + 12), window.innerWidth - tipW - 8)}px`;
+    el.style.top = `${e.clientY + 14}px`;
+  });
+  canvas.addEventListener('mouseleave', () => { getTipEl().hidden = true; });
+}
+
 function setupCanvas(canvas) {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
@@ -76,6 +121,7 @@ export function barChart(canvas, points, format) {
   const n = points.length;
   const slot = (width - pad.left - pad.right) / n;
   const barW = Math.min(46, slot * 0.62);
+  const items = [];
   points.forEach((p, i) => {
     const h = ((height - pad.top - pad.bottom) * p.value) / max;
     const x = pad.left + slot * i + (slot - barW) / 2;
@@ -89,7 +135,10 @@ export function barChart(canvas, points, format) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(fmt(p.value), x + barW / 2, y - 4);
+    items.push({ x0: x - 4, x1: x + barW + 4, y0: Math.max(0, y - 18), y1: height - pad.bottom, label: p.label, text: fmt(p.value) });
   });
+  canvas.__tip = { kind: 'bar', items };
+  bindTooltip(canvas);
 }
 
 // Grafik garis dengan titik. points: [{label, value}].
@@ -97,11 +146,19 @@ export function lineChart(canvas, points, format) {
   const { ctx, width, height } = setupCanvas(canvas);
   const pad = { top: 26, right: 12, bottom: 28, left: 56 };
   const values = points.map((p) => p.value);
-  const lo = Math.min(0, ...values);
+  const lo = Math.min(...values);
   const hi = Math.max(...values);
   const span = hi - lo || 1;
-  const max = hi + span * 0.08;
-  const min = lo - span * 0.08;
+  let min, max;
+  if (lo >= 0 && lo > span * 2) {
+    // Semua nilai positif dan jauh dari nol (mis. TPAK, IPM, kemiskinan): perbesar sumbu
+    // agar tren antar tahun terlihat, bukan garis datar di puncak grafik.
+    min = lo - span * 0.5;
+    max = hi + span * 0.5;
+  } else {
+    min = Math.min(0, lo) - span * 0.08;
+    max = hi + span * 0.08;
+  }
   const fmt = format || ((v) => String(Math.round(v)));
   const axisFmt = axisFormat(fmt);
   ctx.strokeStyle = GRID;
@@ -130,6 +187,7 @@ export function lineChart(canvas, points, format) {
     else ctx.lineTo(xAt(i), yAt(p.value));
   });
   ctx.stroke();
+  const items = [];
   points.forEach((p, i) => {
     ctx.fillStyle = p.value < 0 ? RED : TEAL;
     ctx.beginPath();
@@ -140,7 +198,10 @@ export function lineChart(canvas, points, format) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(fmt(p.value), xAt(i), yAt(p.value) - 8);
+    items.push({ x: xAt(i), y: yAt(p.value), label: p.label, text: fmt(p.value) });
   });
+  canvas.__tip = { kind: 'line', items };
+  bindTooltip(canvas);
 }
 
 // Grafik batang horizontal. points: [{label, value}]. Label tiap baris duduk di kolom kiri

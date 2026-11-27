@@ -15,6 +15,8 @@ export const OVERVIEW = [
   { label: 'Inflasi', value: '1,57%', sub: 'Des 2024 (y-on-y)', source: 'BPS 2024', page: '#/ekonomi' },
   { label: 'Pengangguran', value: '4,91%', sub: 'Agustus 2024 (TPT)', source: 'BPS 2024', page: '#/ekonomi' },
   { label: 'Kemiskinan', value: '9,03%', sub: 'Maret 2024', source: 'BPS 2024', page: '#/sosial' },
+  { label: 'Angkatan kerja', value: '149,38 jt', sub: 'Agustus 2024', source: 'BPS 2024', page: '#/ekonomi' },
+  { label: 'Penduduk miskin', value: '25,22 jt', sub: 'Maret 2024', source: 'BPS 2024', page: '#/sosial' },
 ];
 
 // Penduduk per tahun, juta jiwa. 2010 dan 2020 sensus; lainnya estimasi pertengahan tahun BPS.
@@ -80,6 +82,35 @@ export const GDP_SECTORS = [
   { sector: 'Konstruksi', pct: 9.8 },
   { sector: 'Pertambangan dan penggalian', pct: 8.3 },
   { sector: 'Lapangan usaha lainnya', pct: 38.0 },
+];
+
+// Tingkat Partisipasi Angkatan Kerja Agustus, persen (BPS, Sakernas).
+export const TPAK = [
+  { year: 2019, value: 68.26 },
+  { year: 2020, value: 67.77 },
+  { year: 2021, value: 68.08 },
+  { year: 2022, value: 68.63 },
+  { year: 2023, value: 69.8 },
+  { year: 2024, value: 70.63 },
+];
+
+// Ketenagakerjaan Agustus 2024 (BPS, Sakernas).
+export const LABOR_FACTS = {
+  laborForce: '149,38 juta orang',
+  working: '142,05 juta orang',
+  unemployed: 'sekitar 7,3 juta orang',
+  informal: '59,17%',
+  formal: '40,83%',
+};
+
+// Jumlah penduduk miskin Maret, juta jiwa (BPS).
+export const POOR_COUNT = [
+  { year: 2019, value: 25.14 },
+  { year: 2020, value: 26.42 },
+  { year: 2021, value: 27.54 },
+  { year: 2022, value: 26.16 },
+  { year: 2023, value: 25.9 },
+  { year: 2024, value: 25.22 },
 ];
 
 // Perdagangan luar negeri 2024, miliar USD (BPS).
